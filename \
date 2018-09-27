@@ -20,57 +20,40 @@ void* malloc_perso(size_t size)
 	
 	if (blockCounter == 0)
 	{
-		newBlock = if_first_block(size, newBlock);
+	        newBlock = extend_heap(size);	
+	        void* endOfBlock = sbrk(0);
+
+		setBlock(newBlock, size, endOfBlock, NULL, false);
+		ptr_first_block = newBlock;
 	}
 	else
 	{
 		t_block* foundBlock = find_block(size);
+                printf("foundBlock address: %p\n", (void*)foundBlock);
 
 		if (foundBlock != NULL)
 		{
-			newBlock = if_block_found(size, newBlock);
+			        printf("foundBlock address: %p\n", (void*)foundBlock);
+
+			newBlock = foundBlock;
+			        printf("newBlock address: %p\n", (void*)newBlock);
+
+			setBlock(newBlock, size, foundBlock->next, foundBlock->previous, false);
+			return newBlock;
 		}
                 newBlock = extend_heap(size);
                 void* endOfBlock = sbrk(0);
+
 		setBlock(newBlock, size, endOfBlock, lastBlock, false);
 	}
 	newBlock->data_ptr = (char*) newBlock + sizeof(t_block);
+	printf("\nblock[%d] : %p; next: %p\n", blockCounter, (void*)newBlock, (void*)newBlock->next); 
 	blockCounter++;
 	lastBlock = newBlock;
 
 	return newBlock;
 }
 
-t_block* if_first_block(size_t size, t_block* newBlock)
-{
-	newBlock = extend_heap(size);
-	void* endOfBlock = sbrk(0);
-        
-	setBlock(newBlock, size, endOfBlock, NULL, false);
-        ptr_first_block = newBlock;
-
-	return newBlock;
-}
-
-t_block* if_block_found(size_t size, t_block* newBlock)
-{
-	t_block* foundBlock = find_block(size);
-
-	if (foundBlock != NULL)
-        {
- 	       newBlock = foundBlock;
-               setBlock(newBlock, newBlock->size, foundBlock->next, foundBlock->previous, false);
-        
-	       if (foundBlock->size > size)
-               {
-                        split_block(foundBlock, size);
-               }
-               return newBlock;
-        }
-        
-     return newBlock; 
-
-}
 size_t	dataOptimiser(size_t size)
 {
 	if (size % 4 == 0)
@@ -125,6 +108,8 @@ t_block* extend_heap(size_t size)
 t_block* find_block(size_t size)
 {
 	t_block* block = block_checker(ptr_first_block, size);
+printf("found block in find_block: %p\n", (void*)block);
+
 	return block;
 }
 
@@ -132,30 +117,29 @@ t_block* block_checker(t_block* block, size_t size)
 {
 	if (block == NULL)
 		return NULL;
-	
+
 	if (block->size >= size && block->free == true)
 	{
-		return block;
+		printf("found block in block checker: %p\n", (void*)block);
+		return (void*)block;
 	}
 
 
-	return block_checker(block->next, size);
+	block_checker(block->next, size);
+
+	return NULL;
 }
 
-void split_block (t_block* b, size_t size)
-{//SEG FAULT DUE TO B->NEXT NOT EXISTING
-	if (b == NULL)
-		return;
-	void* newAddress = (char*)b + size;	
-	t_block* newBlock = newAddress;
+t_block* split_block (t_block* b, size_t size)
+{
+	void* newBlock = (char*) b + size;
+        initialize_block(newBlock);
 
-	initialize_block(newBlock);
-	//newBlock = extend_heap(sizeof(t_block));
-	
 	setBlock(newBlock, b->size - size, b->next, b, true);
-	b->next->previous = newBlock;
+	b->size = size;
 	b->next = newBlock;
+	printf("\nnewBlock address: %p\n", newBlock);
+	printf("b address: %p\n", newBlock);
 
-
-	return;
+	return newBlock;
 }
