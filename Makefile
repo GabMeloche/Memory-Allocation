@@ -10,7 +10,7 @@ OBJ	= $(SRC:.c =.o)
 ### COMPILATION COMMANDS
 
 CC	= gcc
-CFLAGS	= -W -Wall -pedantic -Wextra -Iincludes
+CFLAGS	= -W -Wall -Wpedantic -pedantic -Wextra -Iincludes
 LDLIBS	= 
 
 ### OTHER COMMANDS
@@ -22,10 +22,6 @@ all : $(NAME)
 
 $(NAME) : $(OBJ)
 	$(CC) $(CFLAGS) $(OBJ) -o $(NAME) $(LDLIBS)
-	@mkdir exe
-	@mkdir obj
-	@mv *.o obj
-	@mv $(NAME) exe
 	@$(ECHO) Compiled
 
 clean : 
